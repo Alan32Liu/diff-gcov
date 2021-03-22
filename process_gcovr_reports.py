@@ -15,47 +15,54 @@ from sets import Set
 import copy
 import random
 import operator
+from collections import defaultdict
 
 def main(gcovr_dir):
-  fuzzer_cov_dict = dict()
-  #iterate through all gcovr reports
-  for reportFileName in os.listdir(gcovr_dir):
-    if reportFileName.endswith(".txt"): 
-      bSet = Set([])
-      f = open(os.path.join(gcovr_dir, reportFileName), "r")
-      for line in f:
-        tmpStrList = re.split('\s+', line.strip())
-        # Only process covered source files and ignore files with 0% coverage
-        if len(tmpStrList) == 5:
-          fileName = tmpStrList[0]
-          coveredBranches = tmpStrList[4].strip().split(",")
-          for branch in coveredBranches:
-            bSet.add(fileName + ":" + branch)
-      fuzzer_cov_dict[reportFileName] = bSet
-      f.close()
-    else:
-        continue
-  
-  hash_dict = dict()
-  for key in fuzzer_cov_dict:
-    fout = open(key + ".hash",'w')
-    hSet = Set([])
-    for data in fuzzer_cov_dict[key]:
-      hSet.add(hash(data))
-      fout.write(str(hash(data)) + '\n')
-    fout.close()
-    hash_dict[key] = hSet
+    fuzzers = []
+    branch_dict = dict()
+    #iterate through all gcovr reports
+    for reportFileName in os.listdir(gcovr_dir):
+        if reportFileName.endswith(".txt"):
+            fuzzer = reportFileName.split(".")[0].split("-")[-1]
+            print fuzzer
+            fuzzers.append(fuzzer)
+            f = open(os.path.join(gcovr_dir, reportFileName), "r")
+            for line in f:
+                tmpStrList = re.split('\s+', line.strip())
+                # Only process covered source files and ignore files with 0% coverage
+                if len(tmpStrList) == 5:
+                    fileName = tmpStrList[0]
+                    coveredBranches = tmpStrList[4].strip().split(",")
+                    for branch in coveredBranches:
+                        # fuzzer_cov_dict = defaultdict(list)
+                        assert len(branch.split("-")) == 2
+                        branch_location, branch_id = branch.split("-")
+                        branch_location = fileName + ":" + branch_location
+                        if branch_location not in branch_dict:
+                            branch_dict[branch_location] = defaultdict(list)
+                        branch_dict[branch_location][fuzzer].append(branch_id)
+            f.close()
+        else:
+            continue
 
-  print "Double check: #items in hash set should equal to #items in non-hash set"
-  for key in hash_dict:
-    print key
-    print len(hash_dict[key])
-    print len(fuzzer_cov_dict[key])
+    # print branch_dict
+    # print fuzzers
+    print "Branches\t\t\t" + "\t\t".join(fuzzers)
+    for branch_location in branch_dict:
+        fuzzers_ids = [branch_dict[branch_location][fuzzer] for fuzzer in fuzzers]
+        if all(fuzzer_ids == fuzzers_ids[0] for fuzzer_ids in fuzzers_ids):
+            continue
+        line = str(branch_location)
+        for fuzzer in fuzzers:
+            line += "\t\t{}".format(",".join(branch_dict[branch_location][fuzzer]))
+        print line
 
-  return 0
+    return 0
+
+
 # Parse the input arguments
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()    
-    parser.add_argument('-d','--gcovr_dir',type=str,required=True,help="Full path to the folder keeping all gcovr reports (gcovr_report_*.txt)") 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d','--gcovr_dir',type=str,required=True,help="Full path to the folder keeping all gcovr reports (gcovr_report-*.txt)")
     args = parser.parse_args()
     main(args.gcovr_dir)
