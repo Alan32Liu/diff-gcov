@@ -11,6 +11,7 @@ import re
 import sys
 import argparse
 import os
+import pdb
 from sets import Set
 import copy
 import random
@@ -21,10 +22,10 @@ def main(gcovr_dir):
     fuzzers = []
     branch_dict = dict()
     #iterate through all gcovr reports
-    for reportFileName in os.listdir(gcovr_dir):
+    for reportFileName in sorted(os.listdir(gcovr_dir)):
         if reportFileName.endswith(".txt"):
             fuzzer = reportFileName.split(".")[0].split("-")[-1]
-            print fuzzer
+            # print fuzzer
             fuzzers.append(fuzzer)
             f = open(os.path.join(gcovr_dir, reportFileName), "r")
             for line in f:
@@ -40,21 +41,23 @@ def main(gcovr_dir):
                         branch_location = fileName + ":" + branch_location
                         if branch_location not in branch_dict:
                             branch_dict[branch_location] = defaultdict(list)
-                        branch_dict[branch_location][fuzzer].append(branch_id)
+                        branch_dict[branch_location][fuzzer].append(int(branch_id))
             f.close()
         else:
             continue
 
     # print branch_dict
     # print fuzzers
-    print "Branches\t\t\t" + "\t\t".join(fuzzers)
-    for branch_location in branch_dict:
+    print "Branches\t\t\t" + "".join(["{:>18}".format(fuzzer) for fuzzer in fuzzers])
+    branch_locations = sorted(branch_dict.keys(), key=lambda x: (x.split(":")[0], int(x.split(":")[1])))
+    for branch_location in branch_locations:
         fuzzers_ids = [branch_dict[branch_location][fuzzer] for fuzzer in fuzzers]
         if all(fuzzer_ids == fuzzers_ids[0] for fuzzer_ids in fuzzers_ids):
             continue
-        line = str(branch_location)
+        line = "{:<25}".format(branch_location)
         for fuzzer in fuzzers:
-            line += "\t\t{}".format(",".join(branch_dict[branch_location][fuzzer]))
+            ids = [str(i) for i in sorted(branch_dict[branch_location][fuzzer])]
+            line += "{:>18}".format(",".join(ids) if ids else "-")
         print line
 
     return 0
