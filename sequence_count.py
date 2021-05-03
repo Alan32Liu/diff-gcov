@@ -41,15 +41,40 @@ def collect_each_selection_stats(stats_file):
             if line[:len("[SELECTION]")] != "[SELECTION]":
                 continue
             states = [int(state) for state in line[:-1].split(":")[-1].split(" ") if state]
-            is_missing = True
-            for sequence in aflnet_sequences:
+            is_missing_from_log = True
+            for sequence in aflnet_sequences_log:
                 if states == sequence[:len(states)]:
-                    is_missing = False
+                    is_missing_from_log = False
                     break
-            if is_missing:
-                print(f"Adding missing sequence to aflnet_sequences: {states}")
+            if is_missing_from_log:
+                print(f"Missing from log: {states}")
                 AFLNet_ROOT.add_trace(trace=states)
+
+            is_missing_from_dir = True
+            for sequence in aflnet_sequences_dir:
+                if states == sequence[:len(states)]:
+                    is_missing_from_dir = False
+                    break
+            if is_missing_from_dir:
+                print(f"Missing from dir: {states}")
+                # AFLNet_ROOT.add_trace(trace=states)
+
             AFLNet_ROOT.record_selection_trace(trace=states)
+
+
+def collect_each_execution_stats(stats_file):
+    sequences = []
+    with open(stats_file, 'r') as stats_file:
+        for line in stats_file:
+            if line[:len("[Execution]")] != "[Execution]":
+                continue
+            states = [int(state) for state in line[:-1].split(":")[-1].split(" ") if state]
+            if states in sequences:
+                print(f"Sequence exits: {states}")
+                continue
+            AFLNet_ROOT.add_trace(trace=states)
+            sequences.append(states)
+    return sequences
 
 
 def draw_tree(sequences, tree_name):
@@ -85,20 +110,32 @@ class Node:
         return str(self.name)
 
 
-aflnet_sequences = collect_sequence(aflnet_dir)
-legion_sequences = collect_sequence(legion_dir)
+aflnet_sequences_dir = collect_sequence(aflnet_dir)
+# legion_sequences = collect_sequence(legion_dir)
 
 AFLNet_ROOT: TreeNode = TreeNode(0)
-Legion_ROOT: TreeNode = TreeNode(0)
+# Legion_ROOT: TreeNode = TreeNode(0)
 
 # draw_tree(aflnet_sequences, "AFLNet_Tree")
 # draw_tree(legion_sequences, "Legion_Tree")
 
-for sequence in aflnet_sequences:
-    AFLNet_ROOT.add_trace(trace=sequence)
-    print(sequence)
+# for sequence in aflnet_sequences:
+#     AFLNet_ROOT.add_trace(trace=sequence)
+#     print(sequence)
 
+aflnet_sequences_log = collect_each_execution_stats(stats_file=aflnet_report)
 collect_each_selection_stats(stats_file=aflnet_report)
+
+
+print("Only in log")
+for sequence in aflnet_sequences_log:
+    if sequence not in aflnet_sequences_dir:
+        print(sequence)
+
+print("Only in dir")
+for sequence in aflnet_sequences_dir:
+    if sequence not in aflnet_sequences_log:
+        print(sequence)
 
 # stats = {}
 # collect_selection_stats(stats_file=aflnet_report)
@@ -106,7 +143,6 @@ collect_each_selection_stats(stats_file=aflnet_report)
 #     AFLNet_ROOT.update_attr_in_subtree(condition=lambda x: x.code == state,
 #                                        attr_name='sel',
 #                                        attr_value=sel)
-
 
 
 print(AFLNet_ROOT.tree_repr())
