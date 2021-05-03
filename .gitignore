@@ -1,3 +1,7 @@
+# DOTs/SVGs
+*.dot
+*.svg
+
 # Text results
 **/*.txt
 
