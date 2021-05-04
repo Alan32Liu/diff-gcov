@@ -57,7 +57,7 @@ def collect_each_execution_stats(stats_file):
                 continue
             states = [int(state) for state in line[:-1].split(":")[-1].split(" ") if state]
             if states in sequences:
-                print(f"Sequence exits: {states}")
+                # print(f"Sequence exits: {states}")
                 continue
             AFLNet_ROOT.add_trace(trace=states)
             sequences.append(states)
@@ -74,15 +74,17 @@ aflnet_sequences_log = collect_each_execution_stats(stats_file=aflnet_report)
 collect_each_selection_stats(stats_file=aflnet_report)
 
 
-print("Only in log")
+only_in_log_counter = 0
 for sequence in aflnet_sequences_log:
     if sequence not in aflnet_sequences_dir:
-        print(sequence)
+        only_in_log_counter += 1
+        print(f"Only in log ({only_in_log_counter}): {sequence}")
 
-print("Only in dir")
+only_in_dir_counter = 0
 for sequence in aflnet_sequences_dir:
     if sequence not in aflnet_sequences_log:
-        print(sequence)
+        only_in_dir_counter += 1
+        print(f"Only in dir ({only_in_dir_counter}): {sequence}")
 
 
 print(AFLNet_ROOT.tree_repr())
