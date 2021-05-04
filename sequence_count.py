@@ -5,7 +5,9 @@ import sys
 
 # import pygraphviz as pg
 
-sys.path.insert(0, f"{pathlib.Path(__file__).parent.parent.absolute()}/VisualiseTree")
+sys.path.insert(0,
+                f"{'/'.join(str(pathlib.Path(__file__).parent.parent.absolute()).split('/')[:-1])}"
+                f"/VisualiseTree")
 from visualise_tree import Node as TreeNode
 
 aflnet_dir = sys.argv[1]
