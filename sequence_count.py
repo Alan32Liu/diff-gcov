@@ -55,7 +55,7 @@ def collect_each_selection_stats(stats_file):
 
 
 aflnet_sequences = collect_sequence(aflnet_dir)
-legion_sequences = collect_sequence(legion_dir)
+# legion_sequences = collect_sequence(legion_dir)
 
 AFLNet_ROOT: TreeNode = TreeNode(0)
 Legion_ROOT: TreeNode = TreeNode(0)
@@ -72,7 +72,6 @@ collect_each_selection_stats(stats_file=aflnet_report)
 #     AFLNet_ROOT.update_attr_in_subtree(condition=lambda x: x.code == state,
 #                                        attr_name='sel',
 #                                        attr_value=sel)
-
 
 
 print(AFLNet_ROOT.tree_repr())
