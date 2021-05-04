@@ -16,23 +16,10 @@ aflnet_report = sys.argv[3]
 def collect_sequence(result_dir):
     sequences = []
     for file_name in os.listdir(result_dir):
-        # print(file_name)
-        # prefix, sequence, suffix = file_name.split(":")
-        # assert prefix == "id" and suffix == "new"
         prefix, sequence = file_name.split(":")[:2]
         assert prefix == "id"
         sequences.append([int(state) for state in sequence.split("-") if state])
     return sequences
-
-
-# def collect_overall_selection_stats(stats_file):
-#     with open(stats_file, 'r') as stats_file:
-#         for line in stats_file:
-#             if line[:5] != "State":
-#                 continue
-#             state, sel = [int(word) for word in line.split() if word.isdigit()]
-#             assert state not in stats
-#             stats[state] = sel
 
 
 def collect_each_selection_stats(stats_file):
@@ -97,24 +84,5 @@ for sequence in aflnet_sequences_dir:
     if sequence not in aflnet_sequences_log:
         print(sequence)
 
-# stats = {}
-# collect_selection_stats(stats_file=aflnet_report)
-# for state, sel in stats.items():
-#     AFLNet_ROOT.update_attr_in_subtree(condition=lambda x: x.code == state,
-#                                        attr_name='sel',
-#                                        attr_value=sel)
-
 
 print(AFLNet_ROOT.tree_repr())
-
-
-# for sequence in legion_sequences:
-#     Legion_ROOT.add_trace(trace=sequence)
-#
-# print(Legion_ROOT.tree_repr())
-
-# print(aflnet_sequences)
-# print(legion_sequences)
-
-
-
