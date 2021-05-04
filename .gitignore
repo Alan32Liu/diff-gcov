@@ -1,6 +1,7 @@
-# DOTs/SVGs
+# DOTs/SVGs/PNGs
 *.dot
 *.svg
+*.png
 
 # Text results
 **/*.txt
