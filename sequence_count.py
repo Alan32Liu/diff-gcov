@@ -65,19 +65,19 @@ def compare_aflnet_dir_log(aflnet_dir, aflnet_sequences_log):
 def parse_legion_log():
 
     def parse_tree_line(line):
-        if "000:" in line:
-            pdb.set_trace()
+        # if "000:" in line:
+        #     pdb.set_trace()
 
         intermediate_line_matched = re.search(r".*?[a-zA-Z]:[0-9]*:\s*([|].*)\n", line)
         if intermediate_line_matched:
             return intermediate_line_matched.group(1), False
-        starting_line_matched = re.search(r".*?[a-zA-Z]:[0-9]*:\s*(\\x1b\[1;37m 000:.*)\n", line)
+        starting_line_matched = re.search(r".*?[a-zA-Z]:[0-9]*:\s*(\x1b\[1;37m 000:.*)\n", line)
         if starting_line_matched:
             return starting_line_matched.group(1), True
         return None, False
 
     logs = []
-    with open(legion_report_file, "r+") as legion_report:
+    with open(legion_report_file, "r") as legion_report:
         logs = legion_report.readlines()
 
     tree_repr = []
@@ -107,7 +107,7 @@ def parse_legion_log():
     #     if tree_line:
     #         tree_repr.append(tree_line)
 
-    return tree_repr
+    return tree_repr[::-1]
 
 
 if __name__ == '__main__':
