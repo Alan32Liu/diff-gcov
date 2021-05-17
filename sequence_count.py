@@ -38,12 +38,13 @@ def construct_aflnet_tree():
         cur_selection_path = [int(state) for state in line[:-1].split(":")[-1].split(" ") if state]
         AFLNet_ROOT.record_selection_trace(trace=cur_selection_path)
 
-    with open(aflnet_report_file, 'r') as aflnet_stats:
-        cur_selection_path = [0]    # Assuming the credit of seed inputs goes to the root
-        all_execution_path = []
-        for line in aflnet_stats:
-            record_execution()
-            record_selection()
+    for i in range(1, repetition):
+        with open(f"{report_dir}/aflnet-{i}/log.ansi", 'r') as aflnet_stats:
+            cur_selection_path = [0]    # Assuming the credit of seed inputs goes to the root
+            all_execution_path = []
+            for line in aflnet_stats:
+                record_execution()
+                record_selection()
     return all_execution_path
 
 
@@ -129,28 +130,31 @@ def construct_legion_tree():
         cur_selection_path = [int(state) for state in line.split(":")[-1].split(",") if state]
         Legion_ROOT.record_selection_trace(trace=cur_selection_path)
 
-    with open(legion_report_file, 'r') as legion_stats:
-        cur_selection_path = [0]    # Assuming the credit of seed inputs goes to the root
-        all_execution_path = []
-        for line in legion_stats:
-            record_execution()
-            record_selection()
+    for i in range(1, repetition):
+        with open(f"{report_dir}/aflnet_legion-{i}/log.ansi", 'r') as legion_stats:
+            cur_selection_path = [0]    # Assuming the credit of seed inputs goes to the root
+            all_execution_path = []
+            for line in legion_stats:
+                record_execution()
+                record_selection()
     return all_execution_path
 
 
 if __name__ == '__main__':
     tree_depth = int(sys.argv[1])
-    aflnet_report_file = sys.argv[2]
+    repetition = int(sys.argv[2])
+    report_dir = sys.argv[3]
+
     # aflnet_dir = sys.argv[2] if len(sys.argv) > 2 else None
-    legion_report_file = sys.argv[3]
+    # report_dir = sys.argv[3]
 
     AFLNet_ROOT: TreeNode = TreeNode(0)
     aflnet_sequences_log = construct_aflnet_tree()
-    AFLNet_ROOT.tree_repr(max_depth=tree_depth)
+    AFLNet_ROOT.tree_repr(max_depth=tree_depth, repetition=repetition)
 
     Legion_ROOT: TreeNode = TreeNode(0)
     legion_sequences_log = construct_legion_tree()
-    Legion_ROOT.tree_repr(max_depth=tree_depth)
+    Legion_ROOT.tree_repr(max_depth=tree_depth, repetition=repetition)
 
     # print("\n".join(tree_line for tree_line in parse_legion_log(max_depth=tree_depth)))
 
