@@ -113,6 +113,31 @@ def parse_legion_log(max_depth):
     return tree_repr[::-1]
 
 
+def construct_legion_tree():
+    def record_execution():
+        if "State seq has" not in line:
+            return
+        cur_execution_path = [int(state) for state in line.split(":")[-1].split(",") if state]
+        Legion_ROOT.record_simulation_trace(execution_trace=cur_execution_path,
+                                            selection_trace=cur_selection_path)
+        all_execution_path.append(cur_execution_path)
+
+    def record_selection():
+        nonlocal cur_selection_path
+        if "Selection path" not in line:
+            return
+        cur_selection_path = [int(state) for state in line.split(":")[-1].split(",") if state]
+        Legion_ROOT.record_selection_trace(trace=cur_selection_path)
+
+    with open(legion_report_file, 'r') as legion_stats:
+        cur_selection_path = [0]    # Assuming the credit of seed inputs goes to the root
+        all_execution_path = []
+        for line in legion_stats:
+            record_execution()
+            record_selection()
+    return all_execution_path
+
+
 if __name__ == '__main__':
     tree_depth = int(sys.argv[1])
     aflnet_report_file = sys.argv[2]
@@ -123,5 +148,9 @@ if __name__ == '__main__':
     aflnet_sequences_log = construct_aflnet_tree()
     AFLNet_ROOT.tree_repr(max_depth=tree_depth)
 
-    print("\n".join(tree_line for tree_line in parse_legion_log(max_depth=tree_depth)))
+    Legion_ROOT: TreeNode = TreeNode(0)
+    legion_sequences_log = construct_legion_tree()
+    Legion_ROOT.tree_repr(max_depth=tree_depth)
+
+    # print("\n".join(tree_line for tree_line in parse_legion_log(max_depth=tree_depth)))
 
