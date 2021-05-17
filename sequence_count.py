@@ -62,7 +62,7 @@ def compare_aflnet_dir_log(aflnet_dir, aflnet_sequences_log):
             print(f"Only in dir ({only_in_dir_counter}): {sequence}")
 
 
-def parse_legion_log():
+def parse_legion_log(max_depth):
 
     def parse_tree_line(line):
         # if "000:" in line:
@@ -70,6 +70,9 @@ def parse_legion_log():
 
         intermediate_line_matched = re.search(r".*?[a-zA-Z]:[0-9]*:\s*([|].*)\n", line)
         if intermediate_line_matched:
+            # Tree deeper than needed
+            if intermediate_line_matched.group(1)[max_depth*3] == "|":
+                return None, False
             return intermediate_line_matched.group(1), False
         starting_line_matched = re.search(r".*?[a-zA-Z]:[0-9]*:\s*(\x1b\[1;37m 000:.*)\n", line)
         if starting_line_matched:
@@ -111,13 +114,14 @@ def parse_legion_log():
 
 
 if __name__ == '__main__':
-    aflnet_report_file = sys.argv[1]
+    tree_depth = int(sys.argv[1])
+    aflnet_report_file = sys.argv[2]
     # aflnet_dir = sys.argv[2] if len(sys.argv) > 2 else None
-    legion_report_file = sys.argv[2]
+    legion_report_file = sys.argv[3]
 
-    # AFLNet_ROOT: TreeNode = TreeNode(0)
-    # aflnet_sequences_log = construct_aflnet_tree()
-    # print(AFLNet_ROOT.tree_repr())
+    AFLNet_ROOT: TreeNode = TreeNode(0)
+    aflnet_sequences_log = construct_aflnet_tree()
+    AFLNet_ROOT.tree_repr(max_depth=tree_depth)
 
-    print("\n".join(tree_line for tree_line in parse_legion_log()))
+    print("\n".join(tree_line for tree_line in parse_legion_log(max_depth=tree_depth)))
 
