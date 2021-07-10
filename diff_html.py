@@ -22,8 +22,7 @@ BRANCH_COUNT_PATTERN = r'taken (\d+) times'
 BRANCHES_SCAFFOLD = '<span class="{}" title="{}">{}</span>'
 BRANCH_TAKEN_SCAFFOLD = 'Branch {} taken {} times'
 BRANCH_UNTAKEN_SCAFFOLD = 'Branch {} not taken'
-LINE_SCAFFOLD = '<td align="right" class="linebranch">{}</td>\n\t\t' \
-                '<td align="right" class="linecount {}"><pre>{}</pre></td>'
+LINE_SCAFFOLD = '<td align="right" class="linebranch">{}</td>\n\t\t'
 
 ALL_HEADER = {}
 ALL_CONTENT = {}
@@ -63,14 +62,6 @@ def preprocess_content(target_content):
 
         line_cov = line_info == "coveredLine"
         cover_count = int(cover_count) if cover_count else 0
-
-        # branch_stat = tuple(branch_cov for branches_cov)
-        # for branch_cov in branches_cov:
-        #
-        #     if not branch_cov:
-        #         continue
-
-
 
         return branches_cov, line_cov, cover_count, cur_line
 
@@ -114,11 +105,6 @@ def compare_html():
                         branches_stat[i] = tuple(branch_stat)
                         branches_stat = tuple(branches_stat)
 
-            BRANCHES_SCAFFOLD = '<span class="{}" title="{}">{}</span>'
-            BRANCH_TAKEN_SCAFFOLD = 'Branch {} taken {} times'
-            BRANCH_UNTAKEN_SCAFFOLD = 'Branch {} not taken'
-            LINE_SCAFFOLD = '<td align="right" class="linebranch">{}</td>'
-
             merged_branches = ""
             for i, branch_stat in enumerate(branches_stat):
                 merged_branches += BRANCHES_SCAFFOLD.format(
@@ -134,39 +120,16 @@ def compare_html():
             result_line[fuzzer] = line_formatted
             fuzzer_sumary[fuzzer] = [line_cov] + [branch_stat[0] for branch_stat in branches_stat]
 
-        # if not fuzzer_sumary['aflnet']:
-        #     pdb.set_trace()
-        # if (fuzzer_sumary['aflnet'] or fuzzer_sumary['legion']) and not (fuzzer_sumary['aflnet'] and fuzzer_sumary['legion']):
-        #     pdb.set_trace()
-
-        # if len(fuzzer_sumary['aflnet']) != len(fuzzer_sumary['legion']):
-        #     pdb.set_trace()
-
         assert (not fuzzer_sumary['aflnet'] and not fuzzer_sumary['legion']) \
                or (not fuzzer_sumary['aflnet'][0] or not fuzzer_sumary['legion'][0]) \
                or (len(fuzzer_sumary['aflnet']) == len(fuzzer_sumary['legion']))
-        # print(fuzzer_sumary['aflnet'], fuzzer_sumary['legion'])
+
         if fuzzer_sumary['aflnet'] == fuzzer_sumary['legion']:
             continue
 
         result_lines.append(result_line['aflnet'])
         result_lines.append(result_line['legion'])
         result_lines.append(BLANK_LINE)
-
-            # aflnet_branch_cov, aflnet_line_cov = re.search(block_pattern, aflnet_dict[line_number], re.DOTALL).groups()
-        # legion_branch_cov, legion_line_cov = re.search(block_pattern, legion_dict[line_number], re.DOTALL).groups()
-        #
-        # if aflnet_line_cov != legion_line_cov:
-        #     result_content.append(aflnet_dict[line_number])
-        #     result_content.append(legion_dict[line_number])
-        #     result_content.append(BLANK_LINE)
-        #     continue
-        #
-        # if (aflnet_branch_cov or legion_branch_cov) \
-        #         and re.findall(branch_pattern, aflnet_branch_cov) != re.findall(branch_pattern, legion_branch_cov):
-        #     result_content.append(aflnet_dict[line_number])
-        #     result_content.append(legion_dict[line_number])
-        #     result_content.append(BLANK_LINE)
 
     return result_lines
 
@@ -193,10 +156,7 @@ if __name__ == '__main__':
             = parse_html(each_html)
         ALL_CONTENT[fuzzer][instance-1] = preprocess_content(content)
 
-    # print(ALL_CONTENT['legion'][0][109])
-
     result_content = compare_html()
-    # print(result_content)
 
     construct_result()
 
