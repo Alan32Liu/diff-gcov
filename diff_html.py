@@ -29,6 +29,8 @@ ALL_CONTENT = {}
 ALL_TAIL = {}
 HTML_PATH = "/cov_html/index.ftpserv.c.html"
 
+LINE_COV = {'aflnet': [], 'legion': []}
+BRANCH_COV = {'aflnet': [], 'legion': []}
 
 def collect_html():
     return [f'{fuzzer_result.name}' + HTML_PATH
@@ -44,6 +46,27 @@ def parse_html(target_html):
         target_content = all_content[BODY_START:BODY_END]
         target_tail = all_content[BODY_END:]
     return target_header, target_content, target_tail
+
+
+def preprocess_header(target_header, fuzzer, instance):
+    line_cov = branch_cov = None
+    for line in target_header:
+        if "Lines:" in line:
+            line_cov = True
+            continue
+        if "Branches:" in line:
+            branch_cov = True
+            continue
+        if line_cov:
+            line_cov = re.search(
+                r'<td class="headerTableEntry">(\d+)</td>', line).group(1)
+            LINE_COV[fuzzer][instance-1] = int(line_cov)
+            line_cov = False
+        if branch_cov:
+            branch_cov = re.search(
+                r'<td class="headerTableEntry">(\d+)</td>', line).group(1)
+            BRANCH_COV[fuzzer][instance-1] = int(branch_cov)
+            branch_cov = False
 
 
 def preprocess_content(target_content):
@@ -134,9 +157,43 @@ def compare_html():
     return result_lines
 
 
+def construct_header(target_header):
+    line_cov = branch_cov = None
+    for i, line in enumerate(target_header):
+        if "Lines:" in line:
+            line_cov = True
+            continue
+        if "Branches:" in line:
+            branch_cov = True
+            continue
+        if line_cov:
+            target_header[i] \
+                = '            <td class="headerTableEntry">{} | {}</td>\n'\
+                .format(
+                sum(LINE_COV['aflnet']) / len(LINE_COV['aflnet']),
+                sum(LINE_COV['legion']) / len(LINE_COV['legion']),
+            )
+
+            line_cov = False
+        if branch_cov:
+            target_header[i] \
+                = '            <td class="headerTableEntry">{} | {}</td>\n'\
+                .format(
+                sum(BRANCH_COV['aflnet']) / len(BRANCH_COV['aflnet']),
+                sum(BRANCH_COV['legion']) / len(BRANCH_COV['legion'])
+            )
+            branch_cov = False
+
+    return target_header
+
+
 def construct_result():
     with open(result_html, "w") as target_file:
-        target_file.writelines(ALL_HEADER['aflnet'][0] + result_content + ALL_TAIL['aflnet'][0])
+        target_file.writelines(
+            construct_header(ALL_HEADER['aflnet'][0])
+            + result_content
+            + ALL_TAIL['aflnet'][0]
+        )
 
 
 if __name__ == '__main__':
@@ -147,6 +204,8 @@ if __name__ == '__main__':
     ALL_HEADER = {'aflnet': [None] * max_instance, 'legion': [None] * max_instance}
     ALL_CONTENT = {'aflnet': [None] * max_instance, 'legion': [None] * max_instance}
     ALL_TAIL = {'aflnet': [None] * max_instance, 'legion': [None] * max_instance}
+    LINE_COV = {'aflnet': [None] * max_instance, 'legion': [None] * max_instance}
+    BRANCH_COV = {'aflnet': [None] * max_instance, 'legion': [None] * max_instance}
 
     for each_html in collect_html():
         fuzzer, instance = each_html.split("/")[0].split("-")
@@ -154,6 +213,11 @@ if __name__ == '__main__':
         instance = int(instance)
         ALL_HEADER[fuzzer][instance-1], content, ALL_TAIL[fuzzer][instance-1] \
             = parse_html(each_html)
+        preprocess_header(target_header=ALL_HEADER[fuzzer][instance-1],
+                          fuzzer=fuzzer,
+                          instance=instance)
+        # print(fuzzer, instance-1,
+        #       LINE_COV[fuzzer][instance-1], BRANCH_COV[fuzzer][instance-1])
         ALL_CONTENT[fuzzer][instance-1] = preprocess_content(content)
 
     result_content = compare_html()
